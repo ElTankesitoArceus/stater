@@ -8,4 +8,4 @@ commands:
     description: "Returns the stat value for a player. Primary for testing"
     aliases: [playerstat]
     usage: "/playerstat [playerName] [statistic]"
-    permission: statister.command.playerstat
+    permission: stater.command.playerstat

@@ -13,6 +13,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,9 +22,9 @@ public class APIServer {
 
     static Javalin app;
 
-    static Logger logger = LoggerFactory.getLogger("Statister server");
+    static Logger logger = LoggerFactory.getLogger("Stater API");
 
-    private static final String GET_PLAYER_STATS = "SELECT ";
+    private static final String GET_PLAYER_STATS = "SELECT s.NAME, s.VALUE FROM \"%1$sstats\" s inner join \"%1$splayers\" p on s.PLAYER_ID = p.ID WHERE p.NAME = ? ORDER BY s.NAME ASC";
 
     public static void startServer() {
         app = Javalin.create(config -> {
@@ -51,19 +53,26 @@ public class APIServer {
             String playerName = ctx.pathParam("player");
             jo.put("player", playerName);
             Player p = Bukkit.getPlayer(playerName);
+            Map<String, String> stats = new HashMap<>(PlayerStats.getAvailableStats().size());
             if (p == null) {
-                try (Connection conn = DatabaseManager.getConnection()) {
-
+                try (Connection conn = DatabaseManager.getConnection();
+                     PreparedStatement ps = conn.prepareStatement(GET_PLAYER_STATS.formatted(DatabaseManager.getPrefix()))) {
+                    ps.setString(1, playerName);
+                    ResultSet rs = ps.executeQuery();
+                    while (rs.next()) {
+                        stats.put(rs.getString(1), rs.getString(2));
+                    }
+                    rs.close();
+                }
+            } else {
+                for (String st : PlayerStats.getAvailableStats()) {
+                    stats.put(st, String.valueOf(p.getStatistic(Statistic.valueOf(st))));
                 }
             }
-            if (p == null) {
+            if (stats.isEmpty()) {
                 ctx.status(404);
                 ctx.result("The player %s could not be found".formatted(playerName));
                 return;
-            }
-            Map<String, String> stats = new HashMap<>(PlayerStats.getAvailableStats().size());
-            for (String st : PlayerStats.getAvailableStats()) {
-                stats.put(st.toString(), String.valueOf(p.getStatistic(Statistic.valueOf(st))));
             }
             jo.put("stats", stats);
             ctx.result(jo.toString());

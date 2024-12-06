@@ -5,11 +5,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.github.eltankesitoarceus</groupId>
-    <artifactId>statister</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <artifactId>stater</artifactId>
+    <version>0.0.1-DEV</version>
     <packaging>jar</packaging>
 
-    <name>statister</name>
+    <name>stater</name>
 
     <properties>
         <java.version>21</java.version>

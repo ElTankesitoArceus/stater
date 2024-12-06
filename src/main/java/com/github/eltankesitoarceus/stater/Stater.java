@@ -2,11 +2,13 @@ package com.github.eltankesitoarceus.stater;
 
 import com.github.eltankesitoarceus.stater.commands.Stat;
 import com.github.eltankesitoarceus.stater.data.ConsoleColors;
+import com.github.eltankesitoarceus.stater.data.database.DatabaseManager;
 import com.github.eltankesitoarceus.stater.events.GeneralEvents;
 import com.github.eltankesitoarceus.stater.webserver.api.APIServer;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.sql.SQLException;
 import java.util.logging.Logger;
 
 public final class Stater extends JavaPlugin {
@@ -25,6 +27,13 @@ public final class Stater extends JavaPlugin {
         logger.info(ConsoleColors.YELLOW_BRIGHT + "Initializing API server" + ConsoleColors.RESET);
         this.saveDefaultConfig();
         config = getConfig();
+        try {
+            DatabaseManager.getConnection().close();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
         APIServer.startServer();
         logger.info(ConsoleColors.GREEN_BRIGHT + "API server initialized" + ConsoleColors.RESET);
     }

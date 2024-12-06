@@ -19,10 +19,10 @@ public class GeneralEvents implements Listener {
 
     Logger logger = Logger.getLogger(String.valueOf(GeneralEvents.class));
 
-    private static final String CHECK_PLAYER_QUERY = "SELECT COUNT(*) FROM %splayers WHERE NAME = ?";
-    private static final String MAX_ID = "SELECT MAX(ID) FROM %splayers";//This will NOT scale well on big servers. TODO find a non database specific way of implementing a default value/autoincrement in the database itself
-    private static final String INSERT_PLAYER = "INSERT INTO %splayers (ID, NAME) VALUES (?,?)";
-    private static final String INSERT_PLAYER_STATS = "INSERT INTO %sstats (PLAYER_ID, NAME, VALUE) VALUES (?,?,?)";
+    private static final String CHECK_PLAYER_QUERY = "SELECT COUNT(*) FROM \"%splayers\" WHERE NAME = ?";
+    private static final String MAX_ID = "SELECT MAX(ID) FROM \"%splayers\"";//This will NOT scale well on big servers. TODO find a non database specific way of implementing a default value/autoincrement in the database itself
+    private static final String INSERT_PLAYER = "INSERT INTO \"%splayers\" (ID, NAME) VALUES (?,?)";
+    private static final String INSERT_PLAYER_STATS = "INSERT INTO \"%sstats\" (PLAYER_ID, NAME, VALUE) VALUES (?,?,?)";
 
 
     @EventHandler
@@ -44,12 +44,13 @@ public class GeneralEvents implements Listener {
                     if (rs.next()) {
                         id = rs.getInt(1) + 1;
                     }
+                    System.out.println("Cnt: " + id);
                     ps.close();
                     rs.close();
                     ps = conn.prepareStatement(INSERT_PLAYER.formatted(prefix));
                     ps.setInt(1, id);
                     ps.setString(2, p.getName());
-                    ps.executeQuery();
+                    ps.executeUpdate();
                     ps.close();
                     ps = conn.prepareStatement(INSERT_PLAYER_STATS.formatted(prefix));
                     for (String s : PlayerStats.getAvailableStats()) {
@@ -61,14 +62,13 @@ public class GeneralEvents implements Listener {
                     ps.executeBatch();
                 }
             } else {
-                throw new SQLException("A COUNT() query to the %splayers table returned an empty response".formatted(prefix));
+                throw new SQLException("A COUNT() query to the \"%splayers\" table returned an empty response".formatted(prefix));
             }
         } catch (SQLException ex) {
             logger.severe("SQL " + ex.getSQLState() + " error:" + ex.getMessage());
         } catch (ClassNotFoundException ex) {
             throw new RuntimeException(ex);
         }
-        logger.info("Player " + p.getName() + ": " + PlayerStats.getPlayerStat(p, Statistic.DEATHS));
     }
 
     @EventHandler
