@@ -1,4 +1,4 @@
-package com.github.eltankesitoarceus.statister.data;
+package com.github.eltankesitoarceus.stater.data;
 
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;

@@ -1,4 +1,4 @@
-package com.github.eltankesitoarceus.statister.data;
+package com.github.eltankesitoarceus.stater.data;
 
 import org.bukkit.Statistic;
 import org.bukkit.entity.Player;
@@ -8,7 +8,7 @@ import java.util.List;
 
 public class PlayerStats {
 
-    public static List<String> availableStats;
+    private static List<String> availableStats;
 
     static {
         loadAvailableStats();
@@ -28,5 +28,9 @@ public class PlayerStats {
             if (!s.isSubstatistic())
                 availableStats.add(s.toString());
         }
+    }
+
+    public static List<String> getAvailableStats() {
+        return availableStats;
     }
 }

@@ -1,10 +1,8 @@
-package com.github.eltankesitoarceus.statister.commands;
+package com.github.eltankesitoarceus.stater.commands;
 
-import com.github.eltankesitoarceus.statister.data.PlayerStats;
-import com.github.eltankesitoarceus.statister.data.Players;
-import io.papermc.paper.command.brigadier.BasicCommand;
+import com.github.eltankesitoarceus.stater.data.PlayerStats;
+import com.github.eltankesitoarceus.stater.data.Players;
 import org.bukkit.Bukkit;
-import org.bukkit.Statistic;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -13,8 +11,6 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 public class Stat implements CommandExecutor, TabExecutor {
@@ -49,7 +45,7 @@ public class Stat implements CommandExecutor, TabExecutor {
         if (args.length == 1) {
             return List.of(Players.getAllPlayers());
         }
-        return PlayerStats.availableStats;
+        return PlayerStats.getAvailableStats();
     }
 }
 

@@ -1,0 +1,10 @@
+# Where do you want top store the data.
+# Options: sqlite mysql
+database-type: sqlite
+pool-size: 2
+host: localhost
+port: 3306
+username: root
+password: root
+database: minecraft
+prefix: statister-

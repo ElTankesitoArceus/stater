@@ -1,6 +1,6 @@
-name: statister
+name: stater
 version: '0.0.1-DEV'
-main: com.github.eltankesitoarceus.statister.Statister
+main: com.github.eltankesitoarceus.stater.Stater
 api-version: '1.21'
 
 commands:
