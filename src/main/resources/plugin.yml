@@ -1,0 +1,11 @@
+name: statister
+version: '0.0.1-DEV'
+main: com.github.eltankesitoarceus.statister.Statister
+api-version: '1.21'
+
+commands:
+  playerstat:
+    description: "Returns the stat value for a player. Primary for testing"
+    aliases: [playerstat]
+    usage: "/playerstat [playerName] [statistic]"
+    permission: statister.command.playerstat
