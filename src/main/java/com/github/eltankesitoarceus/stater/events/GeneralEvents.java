@@ -23,6 +23,7 @@ public class GeneralEvents implements Listener {
     private static final String MAX_ID = "SELECT MAX(ID) FROM \"%splayers\"";//This will NOT scale well on big servers. TODO find a non database specific way of implementing a default value/autoincrement in the database itself
     private static final String INSERT_PLAYER = "INSERT INTO \"%splayers\" (ID, NAME) VALUES (?,?)";
     private static final String INSERT_PLAYER_STATS = "INSERT INTO \"%sstats\" (PLAYER_ID, NAME, VALUE) VALUES (?,?,?)";
+    private static final String UPDATE_PLATER_STAT = "UPDATE \"%1$sstats\" SET VALUE = ? WHERE PLAYER_ID = (SELECT ID FROM \"%1$splayers\" WHERE NAME = ?) AND NAME = ?";
 
 
     @EventHandler
@@ -73,6 +74,21 @@ public class GeneralEvents implements Listener {
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent e) {
-        //TODO implement saving player stats
+        try (Connection conn = DatabaseManager.getConnection();
+            PreparedStatement ps = conn.prepareStatement(UPDATE_PLATER_STAT.formatted(DatabaseManager.getPrefix()))) {
+            Player p = e.getPlayer();
+            for (String s : PlayerStats.getAvailableStats()) {
+                ps.setString(1, String.valueOf(p.getStatistic(Statistic.valueOf(s))));
+                ps.setString(2, p.getName());
+                ps.setString(3, s);
+                ps.addBatch();
+            }
+            ps.executeBatch();
+        } catch (SQLException ex) {
+            throw new RuntimeException(ex);
+        } catch (ClassNotFoundException ex) {
+            throw new RuntimeException(ex);
+        }
+
     }
 }
