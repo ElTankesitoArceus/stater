@@ -25,6 +25,8 @@ public class APIServer {
     static Logger logger = LoggerFactory.getLogger("Stater API");
 
     private static final String GET_PLAYER_STATS = "SELECT s.NAME, s.VALUE FROM \"%1$sstats\" s inner join \"%1$splayers\" p on s.PLAYER_ID = p.ID WHERE p.NAME = ? ORDER BY s.NAME ASC";
+    private static final String GET_PLAYER_STAT = "SELECT s.NAME, s.VALUE FROM \"%1$sstats\" s inner join \"%1$splayers\" p on s.PLAYER_ID = p.ID WHERE p.NAME = ? AND s.NAME = ? ORDER BY s.NAME ASC";
+    private static final String GET_STAT = "SELECT p.NAME, s.VALUE FROM \"%1$sstats\" s inner join \"%1$splayers\" p on s.PLAYER_ID = p.ID WHERE s.NAME = ?";
 
     public static void startServer() {
         app = Javalin.create(config -> {
@@ -42,9 +44,36 @@ public class APIServer {
         app.get("/stats/player/{player}/{stat}", ctx -> {
             JSONObject jo = new JSONObject();
             String playerName = ctx.pathParam("player");
+            String stat = ctx.pathParam("stat");
             jo.put("player", playerName);
-            jo.put("value", PlayerStats.getPlayerStat(Bukkit.getPlayer(playerName), ctx.pathParam("stat")));
-            ctx.contentType(ContentType.APPLICATION_JSON);
+            Player p = Bukkit.getPlayer(playerName);
+            Map<String, String> stats = new HashMap<>(PlayerStats.getAvailableStats().size());
+            if (p == null) {
+                try (Connection conn = DatabaseManager.getConnection();
+                     PreparedStatement ps = conn.prepareStatement(GET_PLAYER_STAT.formatted(DatabaseManager.getPrefix()))) {
+                    ps.setString(1, playerName);
+                    ps.setString(2, stat);
+                    ResultSet rs = ps.executeQuery();
+                    if (rs.next()) {
+                        stats.put(rs.getString(1), rs.getString(2));
+                    } else {
+                        ctx.status(404);
+                        ctx.result("The statistic %s could not be found".formatted(stat));
+                        return;
+                    }
+                    rs.close();
+                }
+            } else {
+                for (String st : PlayerStats.getAvailableStats()) {
+                    stats.put(st, String.valueOf(p.getStatistic(Statistic.valueOf(st))));
+                }
+            }
+            if (stats.isEmpty()) {
+                ctx.status(404);
+                ctx.result("The player %s could not be found".formatted(playerName));
+                return;
+            }
+            jo.put("stats", stats);
             ctx.result(jo.toString());
         });
 
@@ -75,6 +104,28 @@ public class APIServer {
                 return;
             }
             jo.put("stats", stats);
+            ctx.result(jo.toString());
+        });
+        app.get("/stats/stat/{stat}", ctx -> {
+            JSONObject jo = new JSONObject();
+            String stat = ctx.pathParam("stat");
+            jo.put("stat", stat);
+            Map<String, String> stats = new HashMap<>();
+            try (Connection conn = DatabaseManager.getConnection();
+                    PreparedStatement ps = conn.prepareStatement(GET_STAT.formatted(DatabaseManager.getPrefix()));) {
+                ps.setString(1, stat);
+                ResultSet rs = ps.executeQuery();
+                while (rs.next()) {
+                    stats.put(rs.getString(1), rs.getString(2));
+                }
+                rs.close();
+            }
+            if (stats.isEmpty()) {
+                ctx.status(404);
+                ctx.result("The stat %s could not be found".formatted(stat));
+                return;
+            }
+            jo.put("values", stats);
             ctx.result(jo.toString());
         });
         app.start();
