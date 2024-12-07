@@ -12,11 +12,11 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class APIServer {
 
@@ -26,7 +26,7 @@ public class APIServer {
 
     private static final String GET_PLAYER_STATS = "SELECT s.NAME, s.VALUE FROM \"%1$sstats\" s inner join \"%1$splayers\" p on s.PLAYER_ID = p.ID WHERE p.NAME = ? ORDER BY s.NAME ASC";
     private static final String GET_PLAYER_STAT = "SELECT s.NAME, s.VALUE FROM \"%1$sstats\" s inner join \"%1$splayers\" p on s.PLAYER_ID = p.ID WHERE p.NAME = ? AND s.NAME = ? ORDER BY s.NAME ASC";
-    private static final String GET_STAT = "SELECT p.NAME, s.VALUE FROM \"%1$sstats\" s inner join \"%1$splayers\" p on s.PLAYER_ID = p.ID WHERE s.NAME = ?";
+    private static final String GET_STAT = "SELECT p.NAME, s.VALUE FROM \"%1$sstats\" s inner join \"%1$splayers\" p on s.PLAYER_ID = p.ID WHERE s.NAME = ? AND p.NAME NOT IN (%2$s)";
 
     public static void startServer() {
         app = Javalin.create(config -> {
@@ -111,9 +111,20 @@ public class APIServer {
             String stat = ctx.pathParam("stat");
             jo.put("stat", stat);
             Map<String, String> stats = new HashMap<>();
+            List<String> online = new LinkedList<>();
+            Statistic s = Statistic.valueOf(stat);
+            for (Player p : Bukkit.getOnlinePlayers()) {
+                online.add(p.getName());
+                stats.put(p.getName(), String.valueOf(p.getStatistic(s)));
+            }
             try (Connection conn = DatabaseManager.getConnection();
-                    PreparedStatement ps = conn.prepareStatement(GET_STAT.formatted(DatabaseManager.getPrefix()));) {
+                    PreparedStatement ps = conn.prepareStatement(GET_STAT.formatted(DatabaseManager.getPrefix(), String.join(", ", Collections.nCopies(online.size(), "?"))));) {
                 ps.setString(1, stat);
+                int cnt = 2;
+                for (String name : online) {
+                    ps.setString(cnt, name);
+                    cnt++;
+                }
                 ResultSet rs = ps.executeQuery();
                 while (rs.next()) {
                     stats.put(rs.getString(1), rs.getString(2));
